@@ -5,8 +5,11 @@ from pydantic import BaseModel
 
 from google.cloud import storage
 
-from jax import export
+import jax
+from jax import device_put, export
 import jax.numpy as jnp
+
+from tpu_manager import TpuManager
 
 def loadModel(bucket: str, blob: str):
     storage_client = storage.Client()
@@ -19,7 +22,8 @@ def loadModel(bucket: str, blob: str):
     rehydrated_exp: export.Exported = export.deserialize(ba)
     return rehydrated_exp
 
-rehydrated_exp = loadModel("qianminj-bucket", "exported_linear1012")
+tpu_manager = TpuManager(jax.device_count())
+rehydrated_exp = loadModel("qianminj-bucket", "exported_tpu_linear0238")
 app = FastAPI()
 
 
@@ -48,12 +52,21 @@ def update_item(item_id: int, item: Item):
 
 @app.get("/predictions/{prediction_id}")
 def run_model(prediction_id: int, prediction: Prediction):
+
+    device_id = tpu_manager.acquire_one_tpu()
     
     print("input_value: {0}, type: {1}".format(prediction.input_val, type(prediction.input_val)))
-    a = jnp.array(prediction.input_val)
+    # if device_id == 0:
+    #    a = jnp.array(prediction.input_val)
+    # else:
+    a = device_put(jnp.array(prediction.input_val), jax.devices()[device_id])
+
+    print("a is on {0}".format(a.devices()))
 
     x = rehydrated_exp.call(a)
 
     print("output_val: {0}".format(x))
+
+    tpu_manager.release_one_tpu(device_id)
 
     return {"prediction_id": prediction_id, "output_val": str(x)}

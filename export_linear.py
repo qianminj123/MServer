@@ -37,7 +37,7 @@ storage_client = storage.Client()
 bucket_name = "qianminj-bucket"
 
 bucket = storage_client.bucket(bucket_name)
-blob = bucket.blob("exported_linear1012")
+blob = bucket.blob("exported_tpu_linear0238")
 
 with blob.open('wb') as f:
     f.write(serialized)
