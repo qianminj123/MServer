@@ -7,6 +7,18 @@ from google.cloud import storage
 
 from jax import export
 
+def loadModel(bucket: str, blob: str):
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket)
+    blob = bucket.blob(blob)
+
+    with blob.open("rb") as f:
+        ba = f.read()
+
+    rehydrated_exp: export.Exported = export.deserialize(ba)
+    return rehydrated_exp
+
+rehydrated_exp = loadModel("qianminj-bucket", "exported_function1037")
 app = FastAPI()
 
 
@@ -15,10 +27,7 @@ class Item(BaseModel):
     price: float
     is_offer: Union[bool, None] = None
 
-class Model(BaseModel):
-    name: str
-    bucket: str
-    blob: str
+class Prediction(BaseModel):
     input_val: int
 
 
@@ -36,23 +45,11 @@ def read_item(item_id: int, q: Union[str, None] = None):
 def update_item(item_id: int, item: Item):
     return {"item_name": item.name, "item_id": item_id}
 
-@app.get("/models/{model_id}")
-def run_model(model_id: int, model: Model):
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(model.bucket)
-    blob = bucket.blob(model.blob)
+@app.get("/predictions/{prediction_id}")
+def run_model(prediction_id: int, prediction: Prediction):
 
-    with blob.open("rb") as f:
-        ba = f.read()
-
-    rehydrated_exp: export.Exported = export.deserialize(ba)
-
-    print("input_val in float: {0}".format(float(model.input_val)))
-
-    x = rehydrated_exp.call(float(model.input_val))
+    x = rehydrated_exp.call(float(prediction.input_val))
 
     print("output_val: {0}".format(x))
 
-    model.input_val=x
-
-    return {"model_name": model.name, "output_val": str(x)}
+    return {"prediction_id": prediction_id, "output_val": str(x)}
