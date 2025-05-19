@@ -9,7 +9,7 @@ class ModelManager:
 
         with blob.open("rb") as f:
             byte_array = f.read()
-        print("Loading a model")
+        
         self._rehydrated_exp: export.Exported = export.deserialize(byte_array)
 
     def get_exported(self):
