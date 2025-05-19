@@ -2,6 +2,10 @@
 
 A simple server built by FastAPI. 
 
+```
+export PYTHONPATH=/home/qianminj/qianminj123/MServer
+```
+
 To start the server:
 ```
 fastapi run main.py
