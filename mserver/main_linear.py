@@ -5,13 +5,17 @@ from pydantic import BaseModel
 
 from google.cloud import storage
 
-from jax import export
-from model_manager import ModelManager
+import jax
+from jax import device_put, export
+import jax.numpy as jnp
 
-import uvicorn
+from mserver.model_manager import ModelManager
 
-model_manager=ModelManager()
-model_manager.load_model("qianminj-bucket", "exported_0908")
+from mserver.tpu_manager import TpuManager
+
+model_manager = ModelManager()
+model_manager.load_model("qianminj-bucket", "exported_tpu_linear0238")
+tpu_manager = TpuManager(jax.device_count())
 app = FastAPI()
 
 class Item(BaseModel):
@@ -20,7 +24,7 @@ class Item(BaseModel):
     is_offer: Union[bool, None] = None
 
 class Prediction(BaseModel):
-    input_val: int
+    input_val: list
 
 
 @app.get("/")
@@ -40,7 +44,14 @@ def update_item(item_id: int, item: Item):
 @app.get("/predictions/{prediction_id}")
 def run_model(prediction_id: int, prediction: Prediction):
 
-    x = model_manager.get_exported().call(float(prediction.input_val))
+    device_id = tpu_manager.acquire_one_tpu()
+    
+    a = device_put(jnp.array(prediction.input_val), jax.devices()[device_id])
+
+    x = model_manager.get_exported().call(a)
+
+    print("output_val: {0}".format(x))
+
+    tpu_manager.release_one_tpu(device_id)
 
     return {"prediction_id": prediction_id, "output_val": str(x)}
-

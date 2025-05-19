@@ -1,7 +1,7 @@
 import numpy as np
 import jax
 from jax import export
-from model_manager import ModelManager
+from mserver.model_manager import ModelManager
 
 def f(x): return 2 * x * x
 
