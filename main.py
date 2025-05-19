@@ -6,21 +6,13 @@ from pydantic import BaseModel
 from google.cloud import storage
 
 from jax import export
+from model_manager import ModelManager
 
-def loadModel(bucket: str, blob: str):
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(bucket)
-    blob = bucket.blob(blob)
+import uvicorn
 
-    with blob.open("rb") as f:
-        ba = f.read()
-
-    rehydrated_exp: export.Exported = export.deserialize(ba)
-    return rehydrated_exp
-
-rehydrated_exp = loadModel("qianminj-bucket", "exported_function1037")
+model_manager=ModelManager()
+model_manager.load_model("qianminj-bucket", "exported_0908")
 app = FastAPI()
-
 
 class Item(BaseModel):
     name: str
@@ -48,8 +40,7 @@ def update_item(item_id: int, item: Item):
 @app.get("/predictions/{prediction_id}")
 def run_model(prediction_id: int, prediction: Prediction):
 
-    x = rehydrated_exp.call(float(prediction.input_val))
-
-    print("output_val: {0}".format(x))
+    x = model_manager.get_exported().call(float(prediction.input_val))
 
     return {"prediction_id": prediction_id, "output_val": str(x)}
+
