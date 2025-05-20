@@ -13,6 +13,8 @@ from mserver.model_manager import ModelManager
 
 from mserver.tpu_manager import TpuManager
 
+import time
+
 model_manager = ModelManager()
 model_manager.load_model("qianminj-bucket", "exported_tpu_linear0238")
 tpu_manager = TpuManager(jax.device_count())
@@ -45,13 +47,13 @@ def update_item(item_id: int, item: Item):
 def run_model(prediction_id: int, prediction: Prediction):
 
     device_id = tpu_manager.acquire_one_tpu()
+    print("Acquired device {0} for prediction_id {1}".format(device_id, prediction_id))
     
     a = device_put(jnp.array(prediction.input_val), jax.devices()[device_id])
 
     x = model_manager.get_exported().call(a)
 
-    print("output_val: {0}".format(x))
+    print("prediction_id: {0}, output_val: {1}".format(prediction_id, x))
 
-    tpu_manager.release_one_tpu(device_id)
 
     return {"prediction_id": prediction_id, "output_val": str(x)}
