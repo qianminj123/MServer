@@ -4,8 +4,9 @@ import tensorstore as ts
 dataset = ts.open({
      'driver': 'n5',
      'kvstore': {
-         'driver': 'file',
-         'path': 'tmp/dataset/',
+         'driver': 'gcs',
+         'bucket': 'qianminj-bucket',
+         'path': 'tmp/dataset2/',
      },
 }, read=True, write=False).result()
 

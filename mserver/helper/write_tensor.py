@@ -1,25 +1,29 @@
 import tensorstore as ts
-# import numpy as np
+import jax
+from flax import nnx
 
 dataset = ts.open({
      'driver': 'n5',
      'kvstore': {
-         'driver': 'file',
-         'path': 'tmp/dataset/',
+         'driver': 'gcs',
+         'bucket': 'qianminj-bucket',
+         'path': 'tmp/dataset2/',
      },
      'metadata': {
          'compression': {
              'type': 'gzip'
          },
-         'dataType': 'uint32',
-         'dimensions': [20, 20],
+         'dataType': 'float32',
+         'dimensions': [2, 5],
          'blockSize': [100, 100],
      },
      'create': True,
      'delete_existing': True,
  }, read=False, write=True).result()
 
-write_future = dataset[10:12, 16:19].write([[1,2,3],[4,5,6]])
+val = jax.random.uniform(nnx.Rngs(params=0).params(), (2,5))
+print(val)
+write_future = dataset.write(val)
 x = write_future.result()
 print(x)
 #print(dataset.read().result())
