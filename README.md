@@ -28,7 +28,7 @@ curl -X GET  -H "Accept: Application/json" -H "Content-Type: application/json" h
 
 To start the server loading a Flax Linear model with multi-processing:
 ```
-fastapi run main_linear.py
+fastapi run main_mp.py
 ```
 To run a sample query:
 ```
