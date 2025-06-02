@@ -13,12 +13,14 @@ import time
 
 import os
 
+from .config import settings
+
 os.environ['JAX_PLATFORMS']="tpu"
 os.environ["TPU_CHIPS_PER_PROCESS_BOUNDS"] = "1,1,1"
 os.environ["TPU_PROCESS_BOUNDS"] = "1,1,1"
 os.environ["TPU_VISIBLE_DEVICES"] = "0"
 
-model_runner = ModelRunner()
+model_runner = ModelRunner(settings.gcs_bucket, settings.model_file, settings.weight_file)
 
 app = FastAPI()
 
